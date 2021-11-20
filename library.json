@@ -1,0 +1,20 @@
+{
+	"name": "PCA9555",
+	"frameworks": "Arduino",
+	"keywords": "NXP PCA9555",
+	"description": "NXP PCA9555 Library for Arduino",
+	"authors":
+	[
+		{
+			"name": "Tobias Jaster",
+			"email": "t.jaster@posteo.de",
+			"url": "https://github.com/tobiasjaster/PCA9555",
+			"maintainer": true
+		}
+	],
+	"repository":
+	{
+		"type": "git",
+		"url": "https://github.com/tobiasjaster/PCA9555"
+	}
+}

@@ -1,0 +1,30 @@
+#######################################
+# Syntax Coloring Map for PCA9555
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+PCA9555 KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init	        KEYWORD2
+checkAck        KEYWORD2
+portMode	    KEYWORD2
+pinMode	        KEYWORD2
+digitalRead	    KEYWORD2
+digitalWrite	KEYWORD2
+writePort   	KEYWORD2
+write       	KEYWORD2
+readPort    	KEYWORD2
+read        	KEYWORD2
+writeRegister  	KEYWORD2
+readRegister	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
