@@ -11,7 +11,7 @@ PCA9555::~PCA9555() {}
 void PCA9555::init() {}
 
 bool PCA9555::checkAck() {
-    int error;
+    uint8_t error;
     _bus->beginTransmission(_deviceAddr);
 	_bus->write(static_cast<uint8_t>(PCA9555Register::OUTPUT_A));
 	error = _bus->endTransmission();
@@ -23,17 +23,22 @@ bool PCA9555::checkAck() {
     }
 }
 
-void PCA9555::portMode(PCA9555Port port, uint8_t directions, uint8_t inverted)
+uint8_t PCA9555::portMode(PCA9555Port port, uint8_t directions, uint8_t inverted)
 {
-	writeRegister(PCA9555Register::CONFIG_A + port, directions);
-	writeRegister(PCA9555Register::INVERT_A + port, inverted);
+	uint8_t err = 0;
+	err = writeRegister(PCA9555Register::CONFIG_A + port, directions);
+	if (err != 0) {
+		return err;
+	}
+	return writeRegister(PCA9555Register::INVERT_A + port, inverted);
 }
 
-void PCA9555::pinMode(uint8_t pin, uint8_t mode, bool inverted)
+uint8_t PCA9555::pinMode(uint8_t pin, uint8_t mode, bool inverted)
 {
 	PCA9555Register confreg = PCA9555Register::CONFIG_A;
 	PCA9555Register invreg = PCA9555Register::INVERT_A;
 	uint8_t conf, inv;
+	uint8_t err = 0;
 
 	if(pin > 7)
 	{
@@ -42,64 +47,80 @@ void PCA9555::pinMode(uint8_t pin, uint8_t mode, bool inverted)
 		pin -= 8;
 	}
 
-	conf = readRegister(confreg);
+	err = readRegister(confreg, conf);
+	if (err != 0) { return err; }
 	if(mode == INPUT) bitSet(conf, pin);
 	else bitClear(conf, pin);
 
-	inv = readRegister(invreg);
+	err = readRegister(invreg, inv);
+	if (err != 0) { return err; }
 	if(inverted) bitSet(inv, pin);
 	else bitClear(inv, pin);
 
-	writeRegister(confreg, conf);
-	writeRegister(invreg, inv);
+	err = writeRegister(confreg, conf);
+	if (err != 0) { return err; }
+	return writeRegister(invreg, inv);
 }
 
-void PCA9555::digitalWrite(uint8_t pin, uint8_t state)
+uint8_t PCA9555::digitalWrite(uint8_t pin, uint8_t state)
 {
 	PCA9555Register gpioreg = PCA9555Register::OUTPUT_A;
 	uint8_t gpio;
+	uint8_t err = 0;
 	if(pin > 7)
 	{
 		gpioreg = PCA9555Register::OUTPUT_B;
 		pin -= 8;
 	}
-	gpio = readRegister(gpioreg);
+	err = readRegister(gpioreg, gpio);
+	if (err != 0) { return err; }
 	if(state == HIGH) bitSet(gpio, pin);
 	else bitClear(gpio, pin);
-	writeRegister(gpioreg, gpio);
+	return writeRegister(gpioreg, gpio);
 }
 
-uint8_t PCA9555::digitalRead(uint8_t pin)
+uint8_t PCA9555::digitalRead(uint8_t pin, uint8_t& buffer)
 {
 	PCA9555Register inputreg = PCA9555Register::INPUT_A;
 	uint8_t gpio;
+	uint8_t err = 0;
 	if(pin > 7)
 	{
 		inputreg = PCA9555Register::INPUT_B;
 		pin -=8;
 	}
-	gpio = readRegister(inputreg);
-	if(bitRead(gpio, pin)) return HIGH;
-	return LOW;
+	err = readRegister(inputreg, gpio);
+	if (err != 0) { return err; }
+	if(bitRead(gpio, pin)) { 
+		buffer = HIGH; 
+	} else {
+		buffer = LOW;
+	}
+	return 0;
 }
 
-void PCA9555::writePort(PCA9555Port port, uint8_t value) {
-	writeRegister(PCA9555Register::OUTPUT_A + port, value);
+uint8_t PCA9555::writePort(PCA9555Port port, uint8_t value) {
+	return writeRegister(PCA9555Register::OUTPUT_A + port, value);
 }
 
-void PCA9555::write(uint16_t value) {
-	writeRegister(PCA9555Register::OUTPUT_A, lowByte(value), highByte(value));
+uint8_t PCA9555::write(uint16_t value) {
+	return writeRegister(PCA9555Register::OUTPUT_A, lowByte(value), highByte(value));
 }
 
-uint8_t PCA9555::readPort(PCA9555Port port) {
-	return readRegister(PCA9555Register::INPUT_A + port);
+uint8_t PCA9555::readPort(PCA9555Port port, uint8_t& buffer) {
+	return readRegister(PCA9555Register::INPUT_A + port, buffer);
 }
 
-uint16_t PCA9555::read() {
+uint8_t PCA9555::read(uint16_t& buffer) {
 
-	uint8_t a = readPort(PCA9555Port::A);
-	uint8_t b = readPort(PCA9555Port::B);
-	return a | b << 8;
+	uint8_t a, b;
+	uint8_t err = 0;
+	err = readPort(PCA9555Port::A, a);
+	if (err != 0) { return err; }
+	err = readPort(PCA9555Port::B, b);
+	if (err != 0) { return err; }
+	buffer = a | b << 8;
+	return 0;
 }
 
 /**
@@ -108,12 +129,12 @@ uint16_t PCA9555::read() {
  * @param value value to write to Register.
  * Writes the value from addressed chip to selected register.
  */
-void PCA9555::writeRegister(PCA9555Register reg, uint8_t value)
+uint8_t PCA9555::writeRegister(PCA9555Register reg, uint8_t value)
 {
 	_bus->beginTransmission(_deviceAddr);
 	_bus->write(static_cast<uint8_t>(reg));
 	_bus->write(value);
-	_bus->endTransmission();
+	return _bus->endTransmission();
 }
 
 /**
@@ -123,13 +144,13 @@ void PCA9555::writeRegister(PCA9555Register reg, uint8_t value)
  * @param portB value to write to Register of Port B.
  * Writes the value from addressed chip to selected register.
  */
-void PCA9555::writeRegister(PCA9555Register reg, uint8_t portA, uint8_t portB)
+uint8_t PCA9555::writeRegister(PCA9555Register reg, uint8_t portA, uint8_t portB)
 {
 	_bus->beginTransmission(_deviceAddr);
 	_bus->write(static_cast<uint8_t>(reg));
 	_bus->write(portA);
 	_bus->write(portB);
-	_bus->endTransmission();
+	return _bus->endTransmission();
 }
 
 /**
@@ -138,13 +159,15 @@ void PCA9555::writeRegister(PCA9555Register reg, uint8_t portA, uint8_t portB)
  * @return data in register
  * Reads the data from addressed chip at selected register.
  */
-uint8_t PCA9555::readRegister(PCA9555Register reg) {
+uint8_t PCA9555::readRegister(PCA9555Register reg, uint8_t& buffer) {
     
 	_bus->beginTransmission(_deviceAddr);
 	_bus->write(static_cast<uint8_t>(reg));
-	_bus->endTransmission(false);
+	uint8_t err = _bus->endTransmission(false);
+	if (err != 0) { return err; }
 	_bus->requestFrom(_deviceAddr, (uint8_t)1);
-	return _bus->read();
+	buffer = _bus->read();
+	return 0;
 }
 
 /**
@@ -154,12 +177,14 @@ uint8_t PCA9555::readRegister(PCA9555Register reg) {
  * @param portB Pointer to write value from Register of Port B.
  * Reads the data from addressed chip at selected register.
  */
-void PCA9555::readRegister(PCA9555Register reg, uint8_t& portA, uint8_t& portB) {
+uint8_t PCA9555::readRegister(PCA9555Register reg, uint8_t& portA, uint8_t& portB) {
 
 	_bus->beginTransmission(_deviceAddr);
 	_bus->write(static_cast<uint8_t>(reg));
-	_bus->endTransmission();
+	uint8_t err = _bus->endTransmission();
+	if (err != 0) { return err; }
 	_bus->requestFrom(_deviceAddr, (uint8_t)2);
 	portA = _bus->read();
 	portB = _bus->read();
+	return 0;
 }

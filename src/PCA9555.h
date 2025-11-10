@@ -43,16 +43,16 @@ public:
 
 	void init();
     bool checkAck();
-	void portMode(PCA9555Port port, uint8_t directions, uint8_t inverted = 0x00);
-	void pinMode(uint8_t pin, uint8_t mode, bool inverted = false);
-	uint8_t digitalRead(uint8_t pin);
-	void digitalWrite(uint8_t pin, uint8_t value);
-	void writePort(PCA9555Port port, uint8_t value);
-	void write(uint16_t value);
-	uint8_t readPort(PCA9555Port port);
-	uint16_t read();
-	void writeRegister(PCA9555Register reg, uint8_t value);
-	void writeRegister(PCA9555Register reg, uint8_t portA, uint8_t portB);
-	uint8_t readRegister(PCA9555Register reg);
-	void readRegister(PCA9555Register reg, uint8_t& portA, uint8_t& portB);
+	uint8_t portMode(PCA9555Port port, uint8_t directions, uint8_t inverted = 0x00);
+	uint8_t pinMode(uint8_t pin, uint8_t mode, bool inverted = false);
+	uint8_t digitalRead(uint8_t pin, uint8_t& buffer);
+	uint8_t digitalWrite(uint8_t pin, uint8_t value);
+	uint8_t writePort(PCA9555Port port, uint8_t value);
+	uint8_t write(uint16_t value);
+	uint8_t readPort(PCA9555Port port, uint8_t& buffer);
+	uint8_t read(uint16_t& buffer);
+	uint8_t writeRegister(PCA9555Register reg, uint8_t value);
+	uint8_t writeRegister(PCA9555Register reg, uint8_t portA, uint8_t portB);
+	uint8_t readRegister(PCA9555Register reg, uint8_t& buffer);
+	uint8_t readRegister(PCA9555Register reg, uint8_t& portA, uint8_t& portB);
 };
